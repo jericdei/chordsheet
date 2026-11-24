@@ -68,7 +68,16 @@ export function AppNav({ user }: { user: { email: string; name: string | null } 
         <div className="ml-auto flex items-center gap-3">
           <LiveIndicator />
           <ThemeToggle className="hidden sm:flex" />
-          <span className="hidden max-w-48 truncate text-sm text-slate-500 md:block">{user.name || user.email}</span>
+          <Link
+            href="/account"
+            title="Account & backup"
+            className={cn(
+              "hidden max-w-48 truncate rounded-lg px-2 py-1 text-sm md:block",
+              pathname.startsWith("/account") ? "bg-brand-50 text-brand-700" : "text-slate-500 hover:bg-slate-100 hover:text-slate-800",
+            )}
+          >
+            {user.name || user.email}
+          </Link>
           <Button variant="ghost" size="sm" onClick={() => logout.mutate()} disabled={logout.isPending} title="Sign out">
             <LogOut className="h-4 w-4" />
             <span className="hidden sm:inline">Sign out</span>

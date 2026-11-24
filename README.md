@@ -12,6 +12,7 @@ Write songs with chords, build setlists from templates (e.g. **Catholic Mass**),
 - **Import:** paste a chord sheet and it is converted. This works with chords written above the lyrics, ChordPro (`[G]Amazing [C]grace`, `{title:}`, `{key:}`), section names like *Verse 1* or *[Chorus]*, intro lines like `Intro: G D Em C` (which become chord lines), bass-only slash chords (`Am  /G` becomes Am/G), and chords joined on one held note (`Gsus-G7`).
 - **Setlists and templates:** a new setlist built from a template gets one slot per part. Fill the slots with songs, drag to reorder, and set a per-performance key. The PDF is transposed to that key.
 - **PDF export:** choose between *Printable pages* (Letter size: an order-of-service page, one song per page) and *One long page*. One long page puts every song on a single scrolling page for tablets; setlists longer than about 200 inches continue onto a second long page. Options: chords on or off (a lyrics-only copy for singers), text size, and page breaks.
+- **Backup & restore:** click your name in the top bar to download everything (songs, setlists, templates) as a JSON file, or import one. Importing only adds data: anything already in the account is skipped, so it's safe to run more than once.
 - **Realtime:** changes sync live across all of your open tabs and devices.
 - **Auth:** register and log in with email and password. Sessions are stored in the database.
 
@@ -83,3 +84,11 @@ Notes:
 - PDFs are made by headless Chromium, which is installed in the web image (about 300 MB extra) and uses about 150–250 MB of RAM while exporting. It loads the app's own `/print/...` page, which renders songs with the editor's Tiptap extensions and CSS, so the PDF matches the editor. Chromium reaches the app at `http://127.0.0.1:$PORT`; set `INTERNAL_APP_URL` if that won't work in your setup.
 - Session cookies get the `Secure` flag automatically when the request arrives over HTTPS (Traefik sets `X-Forwarded-Proto`).
 - Postgres data lives in the `pgdata` volume.
+
+### Moving local data to the deployed app
+
+1. Run the app locally (`bun run dev`), sign in with the account that has your songs, click your name in the top bar, and choose **Download backup**.
+2. Open the deployed app, register (or sign in), go to the same page, choose the file, and click **Import into this account**.
+
+A backup holds one account's data. Repeat the steps for any other account you want to move.
+
