@@ -1,0 +1,285 @@
+@import "tailwindcss";
+@import "@fontsource-variable/inter";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Bundled so the server-rendered PDF lays text out exactly like the editor. */
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --color-brand-50: #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-200: #c7d2fe;
+  --color-brand-300: #a5b4fc;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+  /* Cards, inputs, menus. */
+  --color-surface: #ffffff;
+  --color-chord: #c2410c;
+  --color-chord-bg: #ffedd5;
+  --color-chord-soft: #fff7ed;
+  --color-chord-ring: #fed7aa;
+  --color-chord-accent: #fb923c;
+}
+
+/*
+ * Dark mode: rather than sprinkling `dark:` variants everywhere, remap the palette the UI is
+ * built from. Slate is inverted (50 = page background … 900 = strongest text) and the tinted
+ * backgrounds (brand/orange/red/amber 50–200) become deep tints.
+ */
+.dark {
+  color-scheme: dark;
+  --color-surface: #111827;
+
+  --color-slate-50: #0a0f1c;
+  --color-slate-100: #1e293b;
+  --color-slate-200: #2c3a4f;
+  --color-slate-300: #475569;
+  --color-slate-400: #7c8aa0;
+  --color-slate-500: #9aa8bb;
+  --color-slate-600: #cbd5e1;
+  --color-slate-700: #e2e8f0;
+  --color-slate-800: #f1f5f9;
+  --color-slate-900: #f8fafc;
+
+  --color-brand-50: #1e1b4b;
+  --color-brand-100: #272463;
+  --color-brand-200: #3730a3;
+  --color-brand-300: #4f46e5;
+  --color-brand-500: #5b54e8;
+  --color-brand-600: #6366f1;
+  --color-brand-700: #a5b4fc;
+
+  --color-chord: #fb923c;
+  --color-chord-bg: #3b2213;
+  --color-chord-soft: #24170e;
+  --color-chord-ring: #7c3a16;
+  --color-chord-accent: #f97316;
+
+  --color-orange-50: #24170e;
+  --color-orange-100: #3b2213;
+  --color-orange-200: #7c3a16;
+  --color-orange-300: #9a4a1c;
+  --color-red-50: #2a1114;
+  --color-red-200: #7f1d1d;
+  --color-red-500: #f87171;
+  --color-red-600: #f87171;
+  --color-red-700: #fca5a5;
+  --color-amber-50: #261d0b;
+  --color-amber-200: #6b4c12;
+  --color-amber-900: #fde68a;
+  --color-emerald-500: #34d399;
+}
+
+html,
+body {
+  background: var(--color-slate-50);
+  color: var(--color-slate-900);
+}
+
+/* ------------------------------------------------------------------ */
+/* Song editor                                                        */
+/* ------------------------------------------------------------------ */
+
+.song-editor .ProseMirror {
+  outline: none;
+  min-height: 55vh;
+  font-size: 1.075rem;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  padding-bottom: 6rem;
+}
+
+.song-editor .ProseMirror p {
+  margin: 0;
+  line-height: 1.55;
+  min-height: 1.55em;
+}
+
+.song-editor .ProseMirror h3 {
+  margin: 1.4em 0 0.35em;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-brand-600);
+}
+
+.dark .song-editor .ProseMirror h3 {
+  color: var(--color-brand-700);
+}
+
+.song-editor .ProseMirror h3:first-child {
+  margin-top: 0;
+}
+
+.song-editor .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--color-slate-400);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/*
+ * The chord node is a zero-width anchor; its label floats above the syllable. The anchor is
+ * tall, so any visual line holding a chord (first line, a wrapped line, or one after a line
+ * break) grows to make room for the chord row, and lines without chords stay compact.
+ */
+.chord {
+  position: relative;
+  display: inline-block;
+  width: 0;
+  height: 2.2em;
+  vertical-align: baseline;
+}
+
+.chord-label {
+  position: absolute;
+  left: -2px;
+  bottom: 1.05em;
+  padding: 0 3px;
+  border-radius: 4px;
+  font-size: 0.86em;
+  font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
+  color: var(--color-chord);
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 120ms;
+}
+
+.chord:hover .chord-label,
+.chord.ProseMirror-selectednode .chord-label {
+  background: var(--color-chord-bg);
+}
+
+.chord.ProseMirror-selectednode .chord-label {
+  outline: 2px solid var(--color-chord-accent);
+}
+
+/*
+ * Display-only spacer inserted when two chords would collide. When it splits a word it
+ * shows a hyphen ("Glo - ria"). It is a decoration, never saved into the lyrics.
+ */
+.chord-spacer {
+  display: inline-block;
+  text-align: center;
+  color: var(--color-slate-400);
+  user-select: none;
+  pointer-events: none;
+}
+
+.song-editor.mode-chords .ProseMirror {
+  cursor: crosshair;
+  caret-color: transparent;
+}
+
+.song-editor.mode-chords .ProseMirror ::selection {
+  background: transparent;
+}
+
+/* Intro / instrumental chord lines: chords inline, e.g. "G - D - Em - C". */
+.song-editor .ProseMirror p.chord-line {
+  padding-top: 0;
+  margin: 0.15em 0;
+  padding-left: 0.6rem;
+  border-left: 3px solid var(--color-chord-ring);
+  min-height: 1.7em;
+  line-height: 1.7;
+  color: var(--color-slate-500);
+  font-weight: 600;
+}
+
+.chord-line .chord {
+  width: auto;
+  height: auto;
+}
+
+.chord-line .chord-label {
+  position: static;
+  display: inline-block;
+  font-size: 1em;
+  padding: 0 4px;
+  background: var(--color-chord-soft);
+  box-shadow: inset 0 0 0 1px var(--color-chord-ring);
+}
+
+.song-editor .ProseMirror p.chord-line.is-empty::before {
+  content: attr(data-placeholder);
+  color: var(--color-slate-300);
+  font-weight: 400;
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Print / PDF sheet (same rendering as the editor)                    */
+/* ------------------------------------------------------------------ */
+
+.print-sheet {
+  --sheet-font: 15px;
+  color: #0f172a;
+  background: #fff;
+}
+
+.print-sheet .song-editor .ProseMirror {
+  min-height: 0;
+  padding-bottom: 0;
+  font-size: var(--sheet-font);
+}
+
+.print-sheet .song-editor .ProseMirror p {
+  break-inside: avoid;
+}
+
+.print-sheet .song-editor .ProseMirror h3 {
+  break-after: avoid;
+}
+
+.print-sheet .chord-label {
+  cursor: default;
+}
+
+.print-song + .print-song {
+  margin-top: 2.2rem;
+}
+
+.print-sheet.page-breaks .print-song + .print-song,
+.print-sheet:not(.continuous) .print-cover + .print-song {
+  margin-top: 0;
+  break-before: page;
+}
+
+/* One continuous page (tablets): songs flow one after another, separated by a rule. */
+.print-sheet.continuous .print-cover + .print-song,
+.print-sheet.continuous .print-song + .print-song {
+  margin-top: 2.5rem;
+  padding-top: 2rem;
+  border-top: 2px solid #e2e8f0;
+}
+
+@media print {
+  html,
+  body {
+    background: #fff !important;
+  }
+}
+
+/* Moving chords: grab a chord name and drop it on another syllable. */
+.song-editor .ProseMirror[contenteditable="true"] .chord-label {
+  cursor: grab;
+  touch-action: none;
+}
+
+.chord.chord-dragging .chord-label {
+  opacity: 0.25;
+}
+
+body.dragging-chord,
+body.dragging-chord * {
+  cursor: grabbing !important;
+  user-select: none;
+}

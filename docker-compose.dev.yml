@@ -1,0 +1,13 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: chordsheet
+      POSTGRES_PASSWORD: chordsheet
+      POSTGRES_DB: chordsheet
+    ports:
+      - "5433:5432"
+    volumes:
+      - chordsheet-dev-db:/var/lib/postgresql/data
+volumes:
+  chordsheet-dev-db:

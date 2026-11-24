@@ -1,0 +1,61 @@
+# Production stack for Dokploy (Compose deployment).
+# Set POSTGRES_PASSWORD and REALTIME_SECRET in Dokploy's "Environment" tab.
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-chordsheet}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-chordsheet}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  migrate:
+    build:
+      context: .
+      target: migrate
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-chordsheet}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-chordsheet}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  realtime:
+    build:
+      context: .
+      target: realtime
+    restart: unless-stopped
+    environment:
+      REALTIME_SECRET: ${REALTIME_SECRET:?set REALTIME_SECRET}
+      REALTIME_PORT: 3001
+    expose:
+      - "3001"
+
+  web:
+    build:
+      context: .
+      target: web
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-chordsheet}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-chordsheet}
+      REALTIME_SECRET: ${REALTIME_SECRET}
+      REALTIME_INTERNAL_URL: http://realtime:3001
+      # A relative path resolves against the page's origin (https -> wss).
+      REALTIME_PUBLIC_URL: ${REALTIME_PUBLIC_URL:-/ws}
+    expose:
+      - "3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      realtime:
+        condition: service_started
+
+volumes:
+  pgdata:

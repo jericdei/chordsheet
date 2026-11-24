@@ -1,0 +1,108 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String            @id @default(cuid())
+  email        String            @unique
+  name         String?
+  passwordHash String
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  sessions     Session[]
+  songs        Song[]
+  setlists     Setlist[]
+  templates    SetlistTemplate[]
+}
+
+model Session {
+  /// sha256 hash of the session token stored in the cookie
+  id        String   @id
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Song {
+  id            String        @id @default(cuid())
+  userId        String
+  title         String
+  artist        String?
+  /// e.g. "G", "Bb", "F#m"
+  key           String        @default("C")
+  tempo         Int?
+  timeSignature String?
+  /// Tiptap / ProseMirror JSON document with inline `chord` nodes
+  content       Json
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  setlistItems  SetlistItem[]
+
+  @@index([userId, updatedAt])
+}
+
+model SetlistTemplate {
+  id          String         @id @default(cuid())
+  userId      String
+  name        String
+  description String?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  slots       TemplateSlot[]
+  setlists    Setlist[]
+
+  @@index([userId])
+}
+
+model TemplateSlot {
+  id         String          @id @default(cuid())
+  templateId String
+  position   Int
+  label      String
+  template   SetlistTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+
+  @@index([templateId, position])
+}
+
+model Setlist {
+  id         String           @id @default(cuid())
+  userId     String
+  name       String
+  date       DateTime?
+  notes      String?
+  templateId String?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
+  user       User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template   SetlistTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  items      SetlistItem[]
+
+  @@index([userId, updatedAt])
+}
+
+model SetlistItem {
+  id        String  @id @default(cuid())
+  setlistId String
+  position  Int
+  /// Part of the service, e.g. "Entrance", "Kyrie"
+  label     String?
+  songId    String?
+  /// Performance key override; the song is transposed into this key
+  key       String?
+  notes     String?
+  setlist   Setlist @relation(fields: [setlistId], references: [id], onDelete: Cascade)
+  song      Song?   @relation(fields: [songId], references: [id], onDelete: SetNull)
+
+  @@index([setlistId, position])
+}

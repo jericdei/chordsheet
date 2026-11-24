@@ -1,0 +1,20 @@
+{
+  "name": "chordsheet",
+  "private": true,
+  "packageManager": "bun@1.3.14",
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "db:generate": "bun --cwd packages/db run generate",
+    "db:migrate": "bun --cwd packages/db run migrate:dev",
+    "db:deploy": "bun --cwd packages/db run migrate:deploy",
+    "db:up": "docker compose -f docker-compose.dev.yml up -d"
+  },
+  "devDependencies": {
+    "turbo": "^2.11.13",
+    "typescript": "^5.9.3"
+  }
+}
