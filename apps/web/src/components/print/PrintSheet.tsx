@@ -1,7 +1,7 @@
 "use client";
 
 import type { ExportSetlist, ExportSong } from "@chordsheet/api";
-import { stripChords } from "@chordsheet/music";
+import { semitonesBetween, stripChords } from "@chordsheet/music";
 import { EditorContent, useEditor } from "@tiptap/react";
 import { useEffect, useMemo, useRef } from "react";
 import { songExtensions } from "@/components/editor/extensions";
@@ -18,7 +18,28 @@ function SongBody({ song, chords }: { song: ExportSong; chords: boolean }) {
   );
 }
 
+/**
+ * Transposition from the song's original key. When the new key is lower, the shapes on the
+ * sheet can be played with a capo to sound in the original key (e.g. Eb → D: capo 1).
+ */
+function transposition(song: ExportSong): { semitones: number; label: string; capo: number | null } | null {
+  const semitones = semitonesBetween(song.originalKey, song.key);
+  if (semitones === 0) return null;
+  return {
+    semitones,
+    label: semitones > 0 ? `+${semitones}` : `\u2212${-semitones}`,
+    capo: semitones < 0 ? -semitones : null,
+  };
+}
+
+function ShiftTag({ song }: { song: ExportSong }) {
+  const shift = transposition(song);
+  if (!shift) return null;
+  return <span className="mr-2 text-xs text-slate-400 tabular-nums">{shift.capo ? `Capo ${shift.capo}` : shift.label}</span>;
+}
+
 function SongHeader({ song, chords }: { song: ExportSong; chords: boolean }) {
+  const shift = transposition(song);
   const meta = [song.tempo ? `${song.tempo} BPM` : null, song.timeSignature].filter(Boolean).join(" · ");
   return (
     <header className="mb-5 break-inside-avoid border-b border-slate-300 pb-2">
@@ -33,6 +54,16 @@ function SongHeader({ song, chords }: { song: ExportSong; chords: boolean }) {
             <div>
               Key: <b className="text-[#c2410c]">{song.key}</b>
               {song.key !== song.originalKey && <span className="text-slate-400"> (orig. {song.originalKey})</span>}
+            </div>
+          )}
+          {chords && shift && (
+            <div className="text-xs text-slate-500">
+              {shift.label} semitone{Math.abs(shift.semitones) === 1 ? "" : "s"}
+              {shift.capo && (
+                <>
+                  {" · "}Capo {shift.capo} (sounds in {song.originalKey})
+                </>
+              )}
             </div>
           )}
           {meta && <div>{meta}</div>}
@@ -59,7 +90,12 @@ function Cover({ setlist, chords }: { setlist: ExportSetlist; chords: boolean })
             <span className="w-6 text-right text-sm font-bold text-slate-400 tabular-nums">{i + 1}</span>
             {hasLabels && <span className="w-52 shrink-0 text-xs font-bold tracking-wide text-[#4338ca] uppercase">{item.label}</span>}
             <span className={item.song ? "flex-1" : "flex-1 text-slate-400"}>{item.song?.title ?? "—"}</span>
-            {chords && <span className="w-10 text-right text-sm font-bold text-[#c2410c]">{item.song?.key ?? ""}</span>}
+            {chords && (
+              <span className="shrink-0 text-right text-sm">
+                {item.song && <ShiftTag song={item.song} />}
+                <span className="inline-block w-10 font-bold text-[#c2410c]">{item.song?.key ?? ""}</span>
+              </span>
+            )}
           </li>
         ))}
       </ol>
